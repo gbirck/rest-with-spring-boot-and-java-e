@@ -1,12 +1,11 @@
 package com.gabriel.rest.controller;
 
 import com.gabriel.rest.exceptions.ResourceNotFoundException;
-import com.gabriel.rest.model.Person;
-import com.gabriel.rest.model.PersonDTO;
+import com.gabriel.rest.model.dto.PersonDTO;
 import com.gabriel.rest.service.PersonService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
@@ -20,13 +19,17 @@ public class PersonController {
     @Autowired
     private PersonService personService;
 
-    @PostMapping
+    @PostMapping(
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<PersonDTO> insert(@RequestBody @Valid PersonDTO person) {
         System.out.println("Received: " + person);
         return ResponseEntity.ok(personService.insert(person));
     }
 
-    @GetMapping(value = "/{id}")
+    @GetMapping(value = "/{id}",
+            produces = { MediaType.APPLICATION_JSON_VALUE,
+                    MediaType.APPLICATION_XML_VALUE })
     public ResponseEntity<PersonDTO> findById(@PathVariable Long id) {
         try {
             PersonDTO person = personService.findById(id);
@@ -36,7 +39,8 @@ public class PersonController {
         }
     }
 
-    @GetMapping(value = "/all")
+    @GetMapping(
+            produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public List<PersonDTO> findAll() {
         return personService.findAll();
     }
@@ -47,9 +51,11 @@ public class PersonController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping(value = "/{id}")
+    @PutMapping(value = "/{id}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE},
+            produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public ResponseEntity<PersonDTO> update(@PathVariable Long id, @RequestBody @Valid PersonDTO person) {
-        person.setId(id);
+        person.setKey(id);
         personService.update(person);
         return ResponseEntity.ok(person);
     }
