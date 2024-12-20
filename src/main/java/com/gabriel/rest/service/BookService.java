@@ -3,7 +3,6 @@ package com.gabriel.rest.service;
 import java.util.List;
 
 import com.gabriel.rest.controller.BookController;
-import com.gabriel.rest.controller.PersonController;
 import com.gabriel.rest.exceptions.ResourceNotFoundException;
 import com.gabriel.rest.mapper.DozerMapper;
 import com.gabriel.rest.model.Book;
@@ -15,6 +14,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BookService {
@@ -22,14 +22,42 @@ public class BookService {
     @Autowired
     private BookRepository bookRepository;
 
-    public List<BookDTO> findAll() {
-        var persons = DozerMapper.parseListObjects(bookRepository.findAll(), BookDTO.class);
-        persons
-                .stream()
-                .forEach(p -> p.add(linkTo(methodOn(BookController.class).findById(p.getKey())).withSelfRel()));
-        return persons;
+    @Transactional
+    public List<BookDTO> findByAuthor(String author) {
+        var books = bookRepository.findBooksByAuthor(author);
+
+        if (books.isEmpty()) {
+            throw new ResourceNotFoundException("Author " + author + " not found");
+        }
+
+        var booksdtos = DozerMapper.parseListObjects(books, BookDTO.class);
+        booksdtos.forEach(p -> p.add(linkTo(methodOn(BookController.class).findById(p.getKey())).withSelfRel()));
+        return booksdtos;
     }
 
+    @Transactional
+    public List<BookDTO> findByTitle(String title) {
+        var books = bookRepository.findBookByTitle(title);
+
+        if (books.isEmpty()) {
+            throw new ResourceNotFoundException("No books found with title: " + title);
+        }
+
+        var booksdtos = DozerMapper.parseListObjects(books, BookDTO.class);
+        booksdtos.forEach(p -> p.add(linkTo(methodOn(BookController.class).findById(p.getKey())).withSelfRel()));
+        return booksdtos;
+    }
+
+    @Transactional
+    public List<BookDTO> findAll() {
+        var books = DozerMapper.parseListObjects(bookRepository.findAll(), BookDTO.class);
+        books
+                .stream()
+                .forEach(p -> p.add(linkTo(methodOn(BookController.class).findById(p.getKey())).withSelfRel()));
+        return books;
+    }
+
+    @Transactional
     public BookDTO findById(Long id) {
 
         var entity = bookRepository.findById(id)
@@ -39,6 +67,7 @@ public class BookService {
         return dto;
     }
 
+    @Transactional
     public BookDTO insert(BookDTO book) {
 
         System.out.println("Persisting: " + book);
@@ -48,14 +77,16 @@ public class BookService {
         return dto;
     }
 
+    @Transactional
     public BookDTO update(BookDTO book) {
 
         var entity = DozerMapper.parseObject(book, Book.class);
         var dto = DozerMapper.parseObject(bookRepository.save(entity), BookDTO.class);
-        dto.add(linkTo(methodOn(PersonController.class).findById(dto.getKey())).withSelfRel());
+        dto.add(linkTo(methodOn(BookController.class).findById(dto.getKey())).withSelfRel());
         return dto;
     }
 
+    @Transactional
     public void delete(Long id) {
         bookRepository.deleteById(id);
     }

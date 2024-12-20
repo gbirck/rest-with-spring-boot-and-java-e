@@ -11,9 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.PagedModel;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.print.Pageable;
 import java.util.List;
 
 @Service
@@ -42,6 +47,19 @@ public class PersonService {
         var dto = DozerMapper.parseObject(entity, PersonDTO.class);
         dto.add(linkTo(methodOn(PersonController.class).findById(id)).withSelfRel());
         return dto;
+    }
+
+    @Transactional
+    public List<PersonDTO> findByName(String name) {
+        var persons = personRepository.findPersonByName(name);
+
+        if (persons.isEmpty()) {
+            throw new ResourceNotFoundException("No persons found with name: " + name);
+        }
+
+        var personDTOs = DozerMapper.parseListObjects(persons, PersonDTO.class);
+        personDTOs.forEach(p -> p.add(linkTo(methodOn(PersonController.class).findById(p.getKey())).withSelfRel()));
+        return personDTOs;
     }
 
     @Transactional

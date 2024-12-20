@@ -39,6 +39,18 @@ public class PersonController {
         }
     }
 
+    @GetMapping(value = "/name/{name}",
+            produces = {MediaType.APPLICATION_JSON_VALUE,
+                    MediaType.APPLICATION_XML_VALUE})
+    public ResponseEntity<List<PersonDTO>> findByName(@PathVariable String name) {
+        try {
+            List<PersonDTO> person = personService.findByName(name);
+            return ResponseEntity.ok(person);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+    }
+
     @GetMapping(
             produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public List<PersonDTO> findAll() {
@@ -59,4 +71,5 @@ public class PersonController {
         personService.update(person);
         return ResponseEntity.ok(person);
     }
+
 }
